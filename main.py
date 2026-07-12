@@ -269,13 +269,20 @@ async def answer_audio(request: Request):
         last_debug_info["raw_llm"] = raw_llm
         ext = parse_json(raw_llm)
         columns = ext.get("columns", []) or []
+        import re
+
+        columns = [
+            re.sub(r'(?<=[가-힣])\s+(?=\d)', '', c).strip()
+            for c in columns
+        ]
+        
         data_rows = ext.get("data_rows", []) or []
         req_stats = ext.get("requested_stats", [])
         num_rows = ext.get("num_rows")
         explicit_stats = ext.get("explicit_stats", {})
     except Exception:
         pass
-
+    
     # Deterministic safety net for allowed_values (categorical 'one-of' sets). The
     # model frequently drops these entirely, e.g. "카테고리는 A, B, C 중 하나입니다"
     # -> allowed_values={카테고리:[A,B,C]}.
@@ -429,6 +436,21 @@ async def answer_audio(request: Request):
                 if "range" in target:
                     try: explicit_stats.setdefault("range", {}).setdefault(col, emax[col] - emin[col])
                     except Exception: pass
+
+    def normalize_key(k):
+        return re.sub(r'(?<=[가-힣])\s+(?=\d)', '', k).strip()
+
+    new_stats = {}
+    for stat, vals in explicit_stats.items():
+        if isinstance(vals, dict):
+            new_stats[stat] = {
+                normalize_key(k): v
+                for k, v in vals.items()
+            }
+        else:
+            new_stats[stat] = vals
+
+    explicit_stats = new_stats
 
     # Merge every explicit stat into the output.
     for stat_name, stat_dict in explicit_stats.items():
