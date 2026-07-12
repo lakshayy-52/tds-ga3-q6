@@ -205,6 +205,7 @@ async def answer_audio(request: Request):
         transcript = ""
         last_debug_info["exception"] = str(e)
 
+    transcript = re.sub(r'([가-힣]+)\s+(\d+)', r'\1\2', transcript)
     last_debug_info["transcript"] = transcript
 
     # Step 1: GPT-4o extracts structure + which statistics were stated/requested.
