@@ -452,6 +452,23 @@ async def answer_audio(request: Request):
 
     explicit_stats = new_stats
 
+    def fix_name(x):
+        x = str(x)
+        x = x.replace("점수 1", "점수1")
+        x = x.replace("점수 2", "점수2")
+        x = x.replace("점수 3", "점수3")
+        return x
+
+    columns = [fix_name(c) for c in columns]
+
+    for stat in explicit_stats.values():
+        if isinstance(stat, dict):
+            fixed = {}
+            for k, v in stat.items():
+                fixed[fix_name(k)] = v
+            stat.clear()
+            stat.update(fixed)
+
     # Merge every explicit stat into the output.
     for stat_name, stat_dict in explicit_stats.items():
         if stat_name in out and isinstance(out[stat_name], dict) and isinstance(stat_dict, dict):
