@@ -270,7 +270,6 @@ async def answer_audio(request: Request):
         last_debug_info["raw_llm"] = raw_llm
         ext = parse_json(raw_llm)
         columns = ext.get("columns", []) or []
-        import re
 
         columns = [
             re.sub(r'(?<=[가-힣])\s+(?=\d)', '', c).strip()
